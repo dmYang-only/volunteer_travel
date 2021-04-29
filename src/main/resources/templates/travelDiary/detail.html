@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html
+        xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+        layout:decorate="~{base/layout}">
+
+<div layout:fragment="content">
+    <!--header wrapper end-->
+    <!--med_tittle_section-->
+    <div class="med_tittle_section">
+        <div class="med_img_overlay"></div>
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                    <div class="med_tittle_cont_wrapper">
+                        <div class="med_tittle_cont">
+                            <ol class="breadcrumb">
+                                <li><a th:href="@{/}">首页</a></li>
+                                <li>景点列表</li>
+                                <li>预订</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- med_tittle_section End -->
+    <!--service section start-->
+    <div class="page-container">
+        <div class="container">
+            <div class="row med_toppadder50 med_bottompadder50">
+                <div class="col-lg-9 col-md-9 col-sm-8 col-xs-12">
+                    <div class="news-detail-box">
+                        <h3 th:text="${travelDiary.title}"></h3>
+                        <div class="author-info">
+                            <span th:text="${#calendars.format(travelDiary.addDate,'yyyy-MM-dd')}"></span>
+                            发布人：<spa th:text="${travelDiary.user.username}"></spa>
+                        </div>
+                        <div class="news-detail-content">
+                            <p th:text="${travelDiary.content}">
+                            </p>
+                        </div>
+                        <div class="news-detail-content" th:each="comment,commentStat:${travelDiary.diaryCommentList}">
+                            <span th:text="${commentStat.count}"></span>.<span th:text="${comment.content}"></span>
+                            <br/>
+                            评论人：<span th:text="${comment.user.username}"></span>&nbsp;&nbsp;&nbsp;
+                            评论日期：<span th:text="${#calendars.format(comment.addDate,'yyyy-MM-dd HH:mm')}"></span>
+                        </div>
+                        <div class="news-detail-content">发表评论：
+                            <div th:if="${session.user}!=null">
+                                <input type="hidden" id="username" th:value="${session.user.username}" ></input>
+                            </div>
+                            <textarea id="content" class="form-control"></textarea><br/>
+                            <button class="btn btn-info" th:onclick="addComment([[${travelDiary.id}]])">提交</button>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="col-lg-3 col-md-3 col-sm-4 col-xs-12">
+                    <div class="sider-card">
+                        <div class="sider-card-header">
+                            <h3>热门景点</h3>
+                        </div>
+                        <ul class="sider-list-model-a">
+                            <li th:each="attractions:${top10Attractions}">
+                                <a th:href="@{/reserve/attractionsDetailsUI(id=${attractions.id})}" th:text="${attractions.name}"></a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="sider-card">
+                        <div class="sider-card-header">
+                            <h3>热门酒店</h3>
+                        </div>
+                        <ul class="sider-list-model-b">
+                            <li th:each="hotel:${top10Hotel}">
+                                <a th:href="@{/reserve/hotelDetailsUI(id=${hotel.id})}" th:text="${hotel.name}"></a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!--service section end-->
+    <script th:inline="javascript">
+        function cancelAttractionsReserve(id, str) {
+            $.ajax({
+                url: '/travel/reserve/cancelAttractionsReserve',
+                data: {"id": id},
+                type: 'post',
+                async: false,
+                dataType: 'json',
+                success: function (result) {
+                    if (result.code === 200) {
+                        if(str == '预订'){
+                            confirm(str + "成功!"); //在页面上弹出对话框
+                            window.location.href = "/travel/reserve/reserveManageUI";
+                        }else{
+                            confirm(str + "成功!"); //在页面上弹出对话框
+                            window.location.href = "/travel/reserve/reserveAttractionsListUI";
+                        }
+                    } else {
+                        layer.open({
+                            title: '错误提示',
+                            content: result.message
+                        });
+                    }
+                }
+            })
+        }
+
+        function addComment(id) {
+            var username=$("#username").val();
+            if(username==""||username==null){
+                alert("请先登录");
+                window.location.href="/travel/loginUI"
+            }else {
+                var content=$("#content").val();
+                if(content==""||content==null){
+                    alert("请输入评论内容");
+                }else {
+                    $.ajax({
+                        url: '/travel/diary/save',
+                        data: {"id": id,"content":content},
+                        type: 'post',
+                        async: false,
+                        dataType: 'json',
+                        success: function (result) {
+                            if (result.code === 200) {
+                                alert("评论成功");
+                                $("#content").val("");
+                                window.location.reload();
+                            } else {
+                                layer.open({
+                                    title: '错误提示',
+                                    content: result.message
+                                });
+                            }
+                        }
+                    })
+                }
+            }
+        }
+    </script>
+</div>
+
+</html>
